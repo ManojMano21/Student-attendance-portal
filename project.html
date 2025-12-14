@@ -1,0 +1,394 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Attendance Portal</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #101820, #1e3c72);
+            color: #fff;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: linear-gradient(90deg, #243B55, #141E30);
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+        .navbar h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        /* CONTAINER (Glass Effect) */
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(12px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        }
+
+        h2, h3 {
+            border-left: 5px solid #4fd4ff;
+            padding-left: 10px;
+        }
+
+        /* BUTTONS */
+        button {
+            background: #4fd4ff;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 8px 5px;
+        }
+
+        button:hover {
+            background: white;
+            color: #0A3D62;
+            transform: scale(1.03);
+            transition: 0.2s;
+        }
+
+        /* SELECT BOX */
+        select {
+            padding: 8px;
+            border-radius: 10px;
+            border: none;
+            margin: 10px 0;
+            width: 40%;
+        }
+
+        /* STUDENT LIST */
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul li {
+            background: rgba(255,255,255,0.15);
+            margin: 6px 0;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* SUMMARY BOX */
+        #summarySection {
+            background: rgba(255,255,255,0.12);
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 12px;
+        }
+
+        /* POPUP */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 350px;
+            background: #ffffff;
+            color: black;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .popup input {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0 14px;
+            border-radius: 10px;
+            border: 1px solid #aaa;
+        }
+       font-weight: bold;
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <h1>Department Attendance Portal</h1>
+        <p>Academic Year: <span id="academicYear">2025</span></p>
+    </div>
+
+    <div class="container">
+        <div id="formSection">
+            <h2>Mark Attendance</h2>
+
+            <button onclick="showAddStudentForm()">Add Student</button>
+            <button onclick="showAddClassForm()">Add Class</button>
+            <label for="classSelector"><b>Select Class:</b></label>
+            <select id="classSelector" onchange="showStudentsList()"></select></br>
+            <label for="attendencedatepicker">date:</label>
+            <input type="date" id="attendencedatepicker">
+            <h3>Students</h3>
+            <ul id="studentsList"></ul>
+
+            <!-- Summary -->
+            <div id="summarySection">
+                <h3>Report</h3>
+                <p>Total Students: <span id="totalStudents">0</span></p>
+                <p>Total Present: <span id="totalPresent">0</span></p>
+                <p>Total Absent: <span id="totalAbsent">0</span></p>
+                <p>Total Leave: <span id="totalLeave">0</span></p>
+            </div>
+
+            <button onclick="submitAttendance()">Submit Attendance</button>
+
+            <div id="resultSection" style="display:none;">
+                <h3>Attendance Result</h3>
+                <p>Date: <span id="attendanceDate"></span></p>
+                <p>Time: <span id="attendanceTime"></span></p>
+                <p>Class: <span id="attendanceClass"></span></p>
+                <p>Total Students: <span id="attendanceTotalStudents"></span></p>
+                <p>Present: <span id="attendancePresent"></span></p>
+                <p>Absent: <span id="attendanceAbsent"></span></p>
+                <p>Leave: <span id="attendanceLeave"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD STUDENT POPUP -->
+    <div id="addStudentPopup" class="popup">
+        <h2>Add Student</h2>
+        <label>Student Name:</label>
+        <input type="text" id="newStudentName">
+
+        <label>Roll Number:</label>
+        <input type="text" id="newStudentRoll">
+
+        <button onclick="addStudent()">Submit</button>
+        <button onclick="closePopup()">Cancel</button>
+    </div>
+
+    <!-- ADD CLASS POPUP -->
+    <div id="addClassPopup" class="popup">
+        <h2>Add Class</h2>
+        <label>Class Name:</label>
+        <input type="text" id="newClassName">
+
+        <button onclick="addClass()">Submit</button>
+        <button onclick="closePopup()">Cancel</button>
+    </div>
+
+
+    <script>
+        // ---- DATA STORAGE ----
+let classes = {
+    "BCA 1st Sem": [
+        { name: "Akash", roll: "01", attendance: "Present" },
+        { name: "Bharath", roll: "02", attendance: "Present" },
+        { name: "Chandana", roll: "03", attendance: "Present" },
+        { name: "Darshan", roll: "04", attendance: "Present" },
+        { name: "Divya", roll: "05", attendance: "Present" },
+        { name: "Harish", roll: "06", attendance: "Present" },
+        { name: "Kavana", roll: "07", attendance: "Present" },
+        { name: "Manoj", roll: "08", attendance: "Present" },
+        { name: "Rohit", roll: "09", attendance: "Present" },
+        { name: "Sahana", roll: "10", attendance: "Present" }
+    ],
+
+    "BCA 2nd Sem": [
+        { name: "Abhishek", roll: "01", attendance: "Present" },
+        { name: "Bhavana", roll: "02", attendance: "Present" },
+        { name: "Chirag", roll: "03", attendance: "Present" },
+        { name: "Deepika", roll: "04", attendance: "Present" },
+        { name: "Gautam", roll: "05", attendance: "Present" },
+        { name: "Kiran", roll: "06", attendance: "Present" },
+        { name: "Lavanya", roll: "07", attendance: "Present" },
+        { name: "Nithin", roll: "08", attendance: "Present" },
+        { name: "Prerana", roll: "09", attendance: "Present" },
+        { name: "Yash", roll: "10", attendance: "Present" }
+    ],
+
+    "BCA 3rd Sem": [
+        { name: "Anjali", roll: "01", attendance: "Present" },
+        { name: "Chethan", roll: "02", attendance: "Present" },
+        { name: "Deekshitha", roll: "03", attendance: "Present" },
+        { name: "Gowtham", roll: "04", attendance: "Present" },
+        { name: "Harshini", roll: "05", attendance: "Present" },
+        { name: "Jayanth", roll: "06", attendance: "Present" },
+        { name: "Keerthana", roll: "07", attendance: "Present" },
+        { name: "Lokesh", roll: "08", attendance: "Present" },
+        { name: "Shravya", roll: "09", attendance: "Present" },
+        { name: "Varun", roll: "10", attendance: "Present" }
+    ]
+};
+
+// ---- INITIAL SETUP ----
+window.onload = function () {
+    loadClasses();
+};
+
+// Load classes into dropdown
+function loadClasses() {
+    const selector = document.getElementById("classSelector");
+    selector.innerHTML = "";
+
+    Object.keys(classes).forEach(className => {
+        let option = document.createElement("option");
+        option.value = className;
+        option.textContent = className;
+        selector.appendChild(option);
+    });
+
+    showStudentsList();
+}
+
+// ---- POPUPS ----
+function showAddStudentForm() {
+    document.getElementById("addStudentPopup").style.display = "block";
+}
+
+function showAddClassForm() {
+    document.getElementById("addClassPopup").style.display = "block";
+}
+
+function closePopup() {
+    document.getElementById("addStudentPopup").style.display = "none";
+    document.getElementById("addClassPopup").style.display = "none";
+}
+
+// ---- ADD CLASS ----
+function addClass() {
+    let newClass = document.getElementById("newClassName").value.trim();
+
+    if (newClass === "") {
+        alert("Enter class name!");
+        return;
+    }
+
+    if (classes[newClass]) {
+        alert("Class already exists!");
+        return;
+    }
+
+    classes[newClass] = [];
+    document.getElementById("newClassName").value = "";
+    closePopup();
+    loadClasses();
+    alert("Class added successfully!");
+}
+
+// ---- ADD STUDENT ----
+function addStudent() {
+    let name = document.getElementById("newStudentName").value.trim();
+    let roll = document.getElementById("newStudentRoll").value.trim();
+    let currentClass = document.getElementById("classSelector").value;
+
+    if (name === "" || roll === "") {
+        alert("Enter all fields!");
+        return;
+    }
+
+    classes[currentClass].push({
+        name: name,
+        roll: roll,
+        attendance: "Present"
+    });
+
+    document.getElementById("newStudentName").value = "";
+    document.getElementById("newStudentRoll").value = "";
+    closePopup();
+
+    showStudentsList();
+    alert("Student added successfully!");
+}
+
+// ---- SHOW STUDENTS ----
+function showStudentsList() {
+    let className = document.getElementById("classSelector").value;
+    let students = classes[className];
+    let ul = document.getElementById("studentsList");
+    ul.innerHTML = "";
+    students.sort((a, b) => a.name.localeCompare(b.name));
+
+    students.forEach((student, index) => {
+        let li = document.createElement("li");
+
+        li.innerHTML = `
+            ${student.roll} - ${student.name}
+            <select onchange="updateAttendance('${className}', ${index}, this.value)">
+                <option value="Present" ${student.attendance === "Present" ? "selected" : ""}>Present</option>
+                <option value="Absent" ${student.attendance === "Absent" ? "selected" : ""}>Absent</option>
+            </select>
+        `;
+
+        ul.appendChild(li);
+    });
+
+    updateSummary();
+}
+
+// ---- UPDATE ATTENDANCE ----
+function updateAttendance(className, index, status) {
+    classes[className][index].attendance = status;
+    updateSummary();
+}
+
+// ---- SUMMARY ----
+function updateSummary() {
+    let className = document.getElementById("classSelector").value;
+    let students = classes[className];
+
+    let total = students.length;
+    let present = students.filter(s => s.attendance === "Present").length;
+    let absent = students.filter(s => s.attendance === "Absent").length;
+    let leave = students.filter(s => s.attendance === "Leave").length;
+
+    document.getElementById("totalStudents").textContent = total;
+    document.getElementById("totalPresent").textContent = present;
+    document.getElementById("totalAbsent").textContent = absent;
+    document.getElementById("totalLeave").textContent = leave;
+}
+
+// ---- SUBMIT ATTENDANCE ----
+function submitAttendance() {
+    let className = document.getElementById("classSelector").value;
+    let students = classes[className];
+
+    if (students.length === 0) {
+        alert("No students in this class!");
+        return;
+    }
+
+    let present = students.filter(s => s.attendance === "Present").length
+    let absent = students.filter(s => s.attendance === "Absent").length
+    let leave = students.filter(s => s.attendance === "Leave").length
+
+    let now = new Date();
+
+    document.getElementById("attendanceDate").textContent = document.getElementById("attendencedatepicker").value || now.toLocaleDateString();
+    document.getElementById("attendanceTime").textContent = now.toLocaleTimeString();
+    document.getElementById("attendanceClass").textContent = className;
+    document.getElementById("attendanceTotalStudents").textContent = students.length;
+    document.getElementById("attendancePresent").textContent = present;
+    document.getElementById("attendanceAbsent").textContent = absent;
+    document.getElementById("attendanceLeave").textContent = leave;
+
+    document.getElementById("resultSection").style.display = "block";
+
+    alert("Attendance Submitted!");
+}
+    </script>
+</body>
+</html>
